@@ -1,0 +1,133 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { getRandomMove } from '../utils/ComputerMove';
+import { CheckWinner } from '../utils/CheckWinner';
+import GameBoard from './PlayingGrid';
+import ScoreCard from './ScoreCard';
+import Result from './Result';
+import ToogleBtn from './ToogleBtn';
+
+
+function MainGamePage() {
+  const [board, setBoard] = useState(Array(9).fill(null));
+  const [isXturn, setisXturn] = useState(true);
+  const [Player1Score, setPlayer1Score] = useState(0);
+  const [Player2Score, setPlayer2Score] = useState(0);
+  const [TieScore, setTieScore] = useState(0);
+  const [isDraw, setisDraw] = useState(false);
+  const [winningCells, setWinningset] = useState([]);
+  const [isVsComputer, setIsVsComputer] = useState(false);
+  const clickSound = useRef(null);
+  const winSound = useRef(null);
+
+  useEffect(() => {
+    clickSound.current = new Audio('/sound.mp3');
+    winSound.current = new Audio('/Victory.mp3');
+  }, []);
+
+  
+
+  const handleClick = (index) => {
+    if (board[index] || CheckWinner(board)) return;
+
+    if (clickSound.current) {
+        clickSound.current.currentTime = 0;
+        clickSound.current.play().catch(() => {});
+    }
+
+    const newBoard = [...board];
+    const currentPlayer = isXturn ? 'X' : 'O';
+    newBoard[index] = currentPlayer;
+    setBoard(newBoard);
+
+    const result = CheckWinner(newBoard);
+
+        if (result) {
+            setWinningset(result.pattern);
+
+            if (result.winner === 'X') setPlayer1Score(p => p + 1);
+            if (result.winner === 'O') setPlayer2Score(p => p + 1);
+
+            if (winSound.current) {
+                winSound.current.currentTime = 0;
+                winSound.current.play().catch(() => {});
+            }
+        } 
+        else if (newBoard.every(cell => cell !== null)) {
+            setisDraw(true);
+            setTieScore(p => p + 1);
+        }
+
+        setisXturn(!isXturn);
+    };
+
+    const result = CheckWinner(board);
+    const winner = result?.winner;
+
+    const handleRefresh = () => {
+        setBoard(Array(9).fill(null));
+        setisXturn(true);
+        setisDraw(false);
+        setWinningset([]);
+    };
+
+    const scores = [
+        { label: "Player1 (X)", value: Player1Score },
+        { label: "Tie", value: TieScore },
+        !isVsComputer?
+        { label: "Player2 (O)", value: Player2Score }:
+        { label: "Computer (O)", value: Player2Score },
+    
+    ];
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBoard(Array(9).fill(null));
+        setisXturn(true);
+        setisDraw(false);
+        setWinningset([]);
+        setTieScore(0);
+        setPlayer1Score(0);
+        setPlayer2Score(0);
+    }, [isVsComputer]);
+
+
+
+    useEffect(() => {
+        if (!isXturn && isVsComputer && !CheckWinner(board)) {
+            const timeout = setTimeout(() => {
+                const move = getRandomMove(board);
+                handleClick(move);
+            }, 500); 
+
+            return () => clearTimeout(timeout);
+        }
+    }, [board, isXturn,isVsComputer]);
+
+  return (
+    <div className="bg-black h-screen w-full flex flex-col items-center justify-center gap-5 p-10">
+         
+        <ToogleBtn
+          setIsVsComputer={setIsVsComputer}
+          isVsComputer ={isVsComputer}
+          />
+        <ScoreCard
+          scores={scores}
+        />
+
+        <GameBoard 
+            board={board} 
+            handleClick={handleClick} 
+            winningCells={winningCells} 
+            isXturn ={isXturn}
+        />
+        <Result
+          winner={winner}
+          isDraw={isDraw}
+          isXturn={isXturn}
+          handleRefresh={handleRefresh}
+        />
+      
+    </div>
+  );
+}
+
+export default MainGamePage;
