@@ -1,10 +1,59 @@
 
 
-const getRandomMove = (board) => {
-  const emptyCells = board
-    .map((val, idx) => (val === null ? idx : null))
-    .filter(val => val !== null);
+import { CheckWinner } from "./CheckWinner";
 
-  return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+export const getBestMove = (board) => {
+  let bestScore = -Infinity;
+  let move;
+
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      board[i] = "O"; // AI move
+      let score = minimax(board, 0, false);
+      board[i] = null;
+
+      if (score > bestScore) {
+        bestScore = score;
+        move = i;
+      }
+    }
+  }
+
+  return move;
 };
-export {getRandomMove};
+
+const minimax = (board, depth, isMaximizing) => {
+  const result = CheckWinner(board);
+
+  if (result?.winner === "O") return 10 - depth;
+  if (result?.winner === "X") return depth - 10;
+  if (board.every(cell => cell !== null)) return 0;
+
+  if (isMaximizing) {
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = "O";
+        let score = minimax(board, depth + 1, false);
+        board[i] = null;
+        bestScore = Math.max(score, bestScore);
+      }
+    }
+
+    return bestScore;
+  } else {
+    let bestScore = Infinity;
+
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] === null) {
+        board[i] = "X";
+        let score = minimax(board, depth + 1, true);
+        board[i] = null;
+        bestScore = Math.min(score, bestScore);
+      }
+    }
+
+    return bestScore;
+  }
+};

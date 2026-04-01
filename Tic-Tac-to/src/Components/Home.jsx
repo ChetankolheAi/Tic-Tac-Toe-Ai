@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { getRandomMove } from '../utils/ComputerMove';
+import { getBestMove } from '../utils/ComputerMove';
 import { CheckWinner } from '../utils/CheckWinner';
 import GameBoard from './PlayingGrid';
 import ScoreCard from './ScoreCard';
@@ -94,7 +94,7 @@ function MainGamePage() {
     useEffect(() => {
         if (!isXturn && isVsComputer && !CheckWinner(board)) {
             const timeout = setTimeout(() => {
-                const move = getRandomMove(board);
+                const move = getBestMove(board);
                 handleClick(move);
             }, 500); 
 
