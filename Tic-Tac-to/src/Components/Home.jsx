@@ -5,6 +5,7 @@ import GameBoard from './PlayingGrid';
 import ScoreCard from './ScoreCard';
 import Result from './Result';
 import ToogleBtn from './ToogleBtn';
+import Footer from '../Pages/footer'
 
 
 function MainGamePage() {
@@ -125,7 +126,7 @@ function MainGamePage() {
           isXturn={isXturn}
           handleRefresh={handleRefresh}
         />
-      
+       
     </div>
   );
 }
