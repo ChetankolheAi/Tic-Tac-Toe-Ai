@@ -22,7 +22,7 @@ io.on("connection", (socket) => {
     if (!rooms[roomId]) {
       rooms[roomId] = {
         players: [], // List of socket IDs
-        scores: { X: 0, O: 0, Tie: 0 }
+        scores: { X: 1, O: 1, Tie: 0 }
       };
     }
 
