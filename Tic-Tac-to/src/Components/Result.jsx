@@ -14,7 +14,7 @@ function Result({winner,isDraw,isXturn,handleRefresh}) {
         </h1>
        
         <button
-          onClick={handleRefresh}
+          onClick={handleRefresh?handleRefresh:""}
           className="px-4 py-2 bg-black text-blue-500 rounded-xl hover:bg-gray-800 font-bold"
         >
           Restart

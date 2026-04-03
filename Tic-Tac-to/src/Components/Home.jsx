@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Hash } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getBestMove } from '../utils/ComputerMove';
 import { CheckWinner } from '../utils/CheckWinner';
 import GameBoard from './PlayingGrid';
@@ -8,57 +10,62 @@ import ToogleBtn from './ToogleBtn';
 import Footer from '../Pages/footer'
 
 
-function MainGamePage() {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [isXturn, setisXturn] = useState(true);
-  const [Player1Score, setPlayer1Score] = useState(0);
-  const [Player2Score, setPlayer2Score] = useState(0);
-  const [TieScore, setTieScore] = useState(0);
-  const [isDraw, setisDraw] = useState(false);
-  const [winningCells, setWinningset] = useState([]);
-  const [isVsComputer, setIsVsComputer] = useState(false);
-  const clickSound = useRef(null);
-  const winSound = useRef(null);
+function MainGamePage({isVsComputer}) {
+    const [board, setBoard] = useState(Array(9).fill(null));
+    const [isXturn, setisXturn] = useState(true);
+    const [Player1Score, setPlayer1Score] = useState(0);
+    const [Player2Score, setPlayer2Score] = useState(0);
+    const [TieScore, setTieScore] = useState(0);
+    const [isDraw, setisDraw] = useState(false);
+    const [winningCells, setWinningset] = useState([]);
+    const [isVsComputerState, setIsVsComputer] = useState(isVsComputer); 
+    const clickSound = useRef(null);
+    const winSound = useRef(null);
 
-  useEffect(() => {
-    clickSound.current = new Audio('/sound.mp3');
-    winSound.current = new Audio('/Victory.mp3');
-  }, []);
+    useEffect(() => {
+        setIsVsComputer(isVsComputer);
+    }, [isVsComputer]);
 
-  
+    useEffect(() => {
+        clickSound.current = new Audio('/sound.mp3');
+        winSound.current = new Audio('/Victory.mp3');
+    }, []);
 
-  const handleClick = (index) => {
-    if (board[index] || CheckWinner(board)) return;
 
-    if (clickSound.current) {
-        clickSound.current.currentTime = 0;
-        clickSound.current.play().catch(() => {});
-    }
 
-    const newBoard = [...board];
-    const currentPlayer = isXturn ? 'X' : 'O';
-    newBoard[index] = currentPlayer;
-    setBoard(newBoard);
+    const handleClick = (index) => {
 
-    const result = CheckWinner(newBoard);
+        if (board[index] || CheckWinner(board) || isDraw) return;
 
-        if (result) {
-            setWinningset(result.pattern);
-
-            if (result.winner === 'X') setPlayer1Score(p => p + 1);
-            if (result.winner === 'O') setPlayer2Score(p => p + 1);
-
-            if (winSound.current) {
-                winSound.current.currentTime = 0;
-                winSound.current.play().catch(() => {});
-            }
-        } 
-        else if (newBoard.every(cell => cell !== null)) {
-            setisDraw(true);
-            setTieScore(p => p + 1);
+        if (clickSound.current) {
+            clickSound.current.currentTime = 0;
+            clickSound.current.play().catch(() => {});
         }
 
-        setisXturn(!isXturn);
+        const newBoard = [...board];
+        const currentPlayer = isXturn ? 'X' : 'O';
+        newBoard[index] = currentPlayer;
+        setBoard(newBoard);
+
+        const result = CheckWinner(newBoard);
+
+            if (result) {
+                setWinningset(result.pattern);
+
+                if (result.winner === 'X') setPlayer1Score(p => p + 1);
+                if (result.winner === 'O') setPlayer2Score(p => p + 1);
+
+                if (winSound.current) {
+                    winSound.current.currentTime = 0;
+                    winSound.current.play().catch(() => {});
+                }
+            } 
+            else if (newBoard.every(cell => cell !== null)) {
+                setisDraw(true);
+                setTieScore(p => p + 1);
+            }
+
+            setisXturn(!isXturn);
     };
 
     const result = CheckWinner(board);
@@ -88,12 +95,12 @@ function MainGamePage() {
         setTieScore(0);
         setPlayer1Score(0);
         setPlayer2Score(0);
-    }, [isVsComputer]);
+    }, [isVsComputerState]);
 
 
 
     useEffect(() => {
-        if (!isXturn && isVsComputer && !CheckWinner(board)) {
+        if (!isXturn && isVsComputerState && !CheckWinner(board)) {
             const timeout = setTimeout(() => {
                 const move = getBestMove(board);
                 handleClick(move);
@@ -101,14 +108,14 @@ function MainGamePage() {
 
             return () => clearTimeout(timeout);
         }
-    }, [board, isXturn,isVsComputer]);
+    }, [board, isXturn,isVsComputerState]);
 
   return (
     <div className="bg-black h-screen w-full flex flex-col items-center justify-center gap-5 p-10">
          
         <ToogleBtn
-          setIsVsComputer={setIsVsComputer}
-          isVsComputer ={isVsComputer}
+        isVsComputer={isVsComputerState}
+        setIsVsComputer={setIsVsComputer}
           />
         <ScoreCard
           scores={scores}
@@ -126,7 +133,13 @@ function MainGamePage() {
           isXturn={isXturn}
           handleRefresh={handleRefresh}
         />
-       
+        <Link 
+            to="/" 
+            className=" text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
+        >
+        <ArrowLeft size={20} />
+        <span>Back to Home</span>
+      </Link>
     </div>
   );
 }
