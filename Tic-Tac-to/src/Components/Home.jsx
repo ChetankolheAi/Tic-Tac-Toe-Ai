@@ -57,7 +57,7 @@ function MainGamePage({isVsComputer}) {
 
                 if (result.winner === 'X') setPlayer1Score(p => p + 1);
                 if (result.winner === 'O') setPlayer2Score(p => p + 1);
-                if(isVsComputer && result.winner==='O'){
+                if(isVsComputerState && result.winner==='O'){
                     if (LooseSound.current) {
                         LooseSound.current.currentTime = 0;
                         LooseSound.current.play().catch(() => {});
