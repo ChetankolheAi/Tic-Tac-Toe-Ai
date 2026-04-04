@@ -36,21 +36,13 @@ const navigate = useNavigate();
       color: 'hover:border-yellow-500'
     },
   ];
+
   const handleNavigate = (id) => {
-  if (id === "friends") {
-   
-    navigate('/Friends');
-  }
-  
-  if (id === "online") {
-    navigate('/OnlineMultiPlayer');
-  }
-  
-  if (id === "computer") {
-   
-    navigate('/Friends?mode=computer');
-  }
-};
+    if (id === "friends") navigate('/Friends');
+    else if (id === "online") navigate('/OnlineMultiPlayer');
+    else if (id === "computer") navigate('/Friends?mode=computer');
+    else if( id=="tournament")navigate('/UnderDevelopment');
+  };
   return (
     <div className="bg-black min-h-screen w-full flex flex-col items-center justify-center gap-10 p-10 font-sans pt-20">
 

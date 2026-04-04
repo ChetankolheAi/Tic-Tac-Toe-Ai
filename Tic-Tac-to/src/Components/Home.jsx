@@ -149,9 +149,11 @@ function MainGamePage({isVsComputer}) {
             to="/" 
             className=" text-gray-400 hover:text-white flex items-center gap-2 transition-colors"
         >
-        <ArrowLeft size={20} />
+        {/* <ArrowLeft size={20} /> */}
+        <span className="h-[1px] w-4 bg-zinc-700 transition-all group-hover:w-8 group-hover:bg-red-400"></span>
         <span>Back to Home</span>
       </Link>
+      
     </div>
   );
 }

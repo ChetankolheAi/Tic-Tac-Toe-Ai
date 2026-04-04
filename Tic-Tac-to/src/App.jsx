@@ -3,6 +3,7 @@ import MainPage from './Components/Home'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './Pages/navbar'
 import Footer from './Pages/footer'
+import UnderDevelopment from './Pages/UnderDevelopment';
 import MultiplayerOnline from './MultiPlayerOnline/MultiPlayerOnline'
 import HomeScreen from './HomeScreen/HomeScreen'
 import { useSearchParams } from "react-router-dom";
@@ -28,6 +29,7 @@ function App() {
           <Route path="/Friends" element={<FriendsWrapper />} />
 
           <Route path="/OnlineMultiPlayer" element={<MultiplayerOnline />}/>
+          <Route path="/UnderDevelopment" element={<UnderDevelopment />}/>
         </Routes>
 
         <Footer/>

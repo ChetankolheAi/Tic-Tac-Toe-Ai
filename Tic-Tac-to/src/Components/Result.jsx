@@ -1,6 +1,6 @@
 import React from 'react'
-
-function Result({winner,isDraw,isXturn,handleRefresh}) {
+import EmojiPage from '../MultiPlayerOnline/EmojiPage'
+function Result({winner,isDraw,isXturn,handleRefresh,roomId,spawnEmojiL,socket}) {
   return (
   <div className="flex justify-between items-center w-[290px] sm:w-[350px] w-[250px] pl-5 bg-gray-900 p-3 rounded-xl shadow-lg shadow-blue-500/50">
         <h1 className="text-lg text-slate-400 font-bold">
@@ -19,6 +19,12 @@ function Result({winner,isDraw,isXturn,handleRefresh}) {
         >
           Restart
         </button>
+        {roomId? <EmojiPage 
+              roomId={roomId}
+              spawnEmojiL={spawnEmojiL}
+              socket={socket}
+          />:""}
+         
       </div>
   )
 }

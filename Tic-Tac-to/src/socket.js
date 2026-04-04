@@ -1,4 +1,7 @@
 import { io } from "socket.io-client";
 
-// export const socket = io("http://localhost:5000");
-export const socket = io(import.meta.env.VITE_BACKEND);
+const URL = window.location.hostname === "localhost" 
+  ? "http://localhost:5000" 
+  : import.meta.env.VITE_BACKEND; 
+
+export const socket = io(URL);
