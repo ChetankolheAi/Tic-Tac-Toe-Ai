@@ -2,7 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-
+const { CheckWinner } = require("./utils/CheckWinner");
 const app = express();
 app.use(cors());
 app.get("/", (req, res) => {
@@ -18,11 +18,11 @@ io.on("connection", (socket) => {
 
   socket.on("join_room", (roomId) => {
 
-    // 1. Initialize room if it doesn't exist
+    // Initinaize a Romm is Does not exists
     if (!rooms[roomId]) {
       rooms[roomId] = {
         players: [], // List of socket IDs
-        scores: { X: 1, O: 1, Tie: 0 }
+        scores: { X: 0, O: 0, Tie: 0 }
       };
     }
 
@@ -51,29 +51,46 @@ io.on("connection", (socket) => {
   });
 
   socket.on("make_move", ({ roomId, index, player }) => {
-    // We use io.to(roomId) to ensure the sender also gets the event This keeps the board and turns perfectly synchronized
-    io.to(roomId).emit("receive_move", { index, player });
-  });
 
-  socket.on("update_score", ({ roomId, winner }) => {
+    if (!rooms[roomId]) return;
 
-    if (rooms[roomId]) {
-
-      if (winner === "X") rooms[roomId].scores.X += 1;
-      else if (winner === "O") rooms[roomId].scores.O += 1;
-      else if (winner === "Tie") rooms[roomId].scores.Tie += 1;
-
-      // Broadcast new scores to both players
-      io.to(roomId).emit("score_updated", rooms[roomId].scores);
-
+    // maintain board on server
+    if (!rooms[roomId].board) {
+      rooms[roomId].board = Array(9).fill(null);
     }
+
+    rooms[roomId].board[index] = player;
+
+    const result = CheckWinner(rooms[roomId].board);
+
+    if (result) {
+      if (result.winner === "X") rooms[roomId].scores.X += 1;
+      if (result.winner === "O") rooms[roomId].scores.O += 1;
+    } 
+    else if (rooms[roomId].board.every(cell => cell !== null)) {
+      rooms[roomId].scores.Tie += 1;
+    }
+
+    io.to(roomId).emit("receive_move", {
+      index,
+      player,
+      scores: rooms[roomId].scores,
+      winner: result?.winner || null,
+      pattern: result?.pattern || [1,2,3],
+      draw: rooms[roomId].board.every(cell => cell !== null)
+    });
   });
 
-  socket.on("restart_game", (roomId) => {
 
-    io.to(roomId).emit("restart_game");
 
-  });
+ socket.on("restart_game", ({ roomId, nextStarter }) => {
+
+  if (rooms[roomId]) {
+    rooms[roomId].board = Array(9).fill(null); //reset the borad
+  }
+
+  io.to(roomId).emit("restart_game", { nextStarter });
+});
 
   socket.on("disconnect", () => {
 
@@ -105,7 +122,7 @@ socket.on("leave_room", (roomId) => {
     if (rooms[roomId]) {
         rooms[roomId].players = rooms[roomId].players.filter(id => id !== socket.id);
         
-        // Notify the other person
+        // Notify the other person the opponent left the game
         socket.to(roomId).emit("opponent_left");
 
         if (rooms[roomId].players.length === 0) {

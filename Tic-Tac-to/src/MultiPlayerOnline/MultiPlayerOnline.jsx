@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { socket } from "../socket";
 import { CheckWinner } from '../utils/CheckWinner';
-import GameBoard from './GridOnline';
+import GameBoard from '../Components/PlayingGrid';
 import Result from '../Components/Result';
 import ScoreCard from '../Components/ScoreCard';
 import RoomScreen from "./RoomScreen";
@@ -17,13 +17,18 @@ function MultiPlayerOnline() {
     const [isDraw, setisDraw] = useState(false);
     const [winningCells, setWinningset] = useState([]);
     const [isXturn, setisXturn] = useState(true);
+     const [isXChance , setisXChance] = useState(true);
     
     const clickSound = useRef(null);
     const winSound = useRef(null);
+    const DrawSound = useRef(null);
+    const LooseSound = useRef(null);
 
     useEffect(() => {
         clickSound.current = new Audio('/sound.mp3');
         winSound.current = new Audio('/Victory.mp3');
+        DrawSound.current = new Audio('/Draw.mp3');
+        LooseSound.current = new Audio('/Loose.mp3');
     }, []);
 
     const joinRoom = () => {
@@ -42,48 +47,59 @@ function MultiPlayerOnline() {
             setGameScores(scores);
             setGameStarted(true);
         });
+;
 
-        socket.on("score_updated", (newScores) => {
-            setGameScores(newScores);
-        });
+       socket.on("receive_move", ({ index, player: movePlayer, scores, winner, pattern, draw }) => {
 
-        socket.on("receive_move", ({ index, player: movePlayer }) => {
-            setBoard((prev) => {
-                if (prev[index] !== null) return prev;
+            setBoard(prev => {
                 const newBoard = [...prev];
                 newBoard[index] = movePlayer;
-
-                const result = CheckWinner(newBoard);
-                if (result) {
-                    setWinningset(result.pattern);
-                    if (winSound.current) {
-                        winSound.current.currentTime = 0;
-                        winSound.current.play().catch(() => {});
-                    }
-                    if (player === movePlayer) {
-                        socket.emit("update_score", { roomId, winner: result.winner });
-                    }
-                } else if (newBoard.every(cell => cell !== null)) {
-                    setisDraw(true);
-                    if (player === movePlayer) {
-                        socket.emit("update_score", { roomId, winner: "Tie" });
-                    }
-                }
                 return newBoard;
             });
 
+            // 🔊 click sound
             if (clickSound.current) {
                 clickSound.current.currentTime = 0;
                 clickSound.current.play().catch(() => {});
             }
+
+            setGameScores(scores);
+
+          
+            if (winner) {
+                setWinningset([...pattern]);
+
+                if (winner === player) {
+                    if (winSound.current) {
+                        winSound.current.currentTime = 0;
+                        winSound.current.play().catch(() => {});
+                    }
+                } else {
+                    if (LooseSound.current) {
+                        LooseSound.current.currentTime = 0;
+                        LooseSound.current.play().catch(() => {});
+                    }
+                }
+            } 
+            else if (draw) {
+                setisDraw(true);
+
+                if (DrawSound.current) {
+                    DrawSound.current.currentTime = 0;
+                    DrawSound.current.play().catch(() => {});
+                }
+            }
+
             setisXturn(movePlayer === "X" ? false : true);
         });
         
         socket.on("room_full", () => alert("Room is full!"));
 
-        socket.on("restart_game", () => {
+      
+        socket.on("restart_game", ({ nextStarter }) => {
             setBoard(Array(9).fill(null));
-            setisXturn(true);
+            setisXturn(nextStarter === "X");
+            setisXChance(nextStarter === "X");
             setisDraw(false);
             setWinningset([]);
         });
@@ -121,7 +137,7 @@ function MultiPlayerOnline() {
 
         if (board[index] != null || winningCells.length > 0 || isDraw) return;
         if (player !== (isXturn ? "X" : "O")) return;
-
+         
         socket.emit("make_move", { roomId, index, player });
 
     };
@@ -132,33 +148,59 @@ function MultiPlayerOnline() {
     const scores = [
         {
             label: `You (${player})`,
-            value: player === "X" ? gameScores.X==0?0:gameScores.X-1 : gameScores.O==0?0:gameScores.O-1
+            value: player === "X" ? gameScores.X:gameScores.O
         },
-        { label: "Tie", value: gameScores.Tie==0?0:gameScores.Tie-1 },
+        { label: "Tie", value: gameScores.Tie },
         {
             label: `Opponent (${player === "X" ? "O" : "X"})`,
-            value: player === "X" ? gameScores.O==0?0:gameScores.O-1 : gameScores.X==0?0:gameScores.X-1
-        },
+            value: player === "X" ? gameScores.O:gameScores.X
+        }
     ];
 
+    
+           
     const handleRefresh = () => {
-        socket.emit("restart_game", roomId);
+        const nextStarter = isXChance ? "O" : "X";
+        socket.emit("restart_game",{ roomId,nextStarter});
     };
 
     if (!gameStarted) {
         if (player !== "") {
             return (
-                <div className="bg-black h-screen w-full flex flex-col items-center justify-center gap-5">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                    <h2 className="text-white text-2xl font-bold">Waiting for Opponent...</h2>
-                    <p className="text-sm text-white italic bg-slate-900 px-5 py-3 rounded-xl">You are Player {player}</p>
-                    <p className="text-gray-400 bg-slate-900 px-5 py-3 rounded-xl">Room ID: <span className="text-blue-400">{roomId}</span></p>
-                    <button 
-                        onClick={() => setPlayer("")} 
-                        className="text-red-500 underline mt-4"
-                    >
-                      Go Back
-                    </button>
+               <div className="flex h-screen w-full flex-col items-center justify-center gap-6 bg-zinc-950 p-4 font-sans selection:bg-blue-500/30">
+                <div className="relative flex items-center justify-center">
+                    <div className="absolute h-16 w-16 animate-ping rounded-full bg-blue-500/20"></div>
+                    <div className="h-14 w-14 animate-spin rounded-full border-4 border-zinc-800 border-t-blue-500 border-b-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
+                </div>
+
+                <div className="space-y-2 text-center">
+                    <h2 className="animate-pulse text-2xl font-black tracking-tight text-white md:text-4xl">
+                    WAITING FOR OPPONENT
+                    </h2>
+                    <p className="text-zinc-500 text-sm font-medium uppercase tracking-widest">
+                    Searching for a match...
+                    </p>
+                </div>
+
+                <div className="flex w-full max-w-xs flex-col gap-3">
+                    <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/50 px-6 py-4 backdrop-blur-sm">
+                    <span className="text-zinc-400 text-xs font-bold uppercase tracking-wider">Role</span>
+                    <span className="font-mono text-lg font-bold text-blue-400">Player {player}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/50 px-6 py-4 backdrop-blur-sm">
+                    <span className="text-zinc-400 text-xs font-bold uppercase tracking-wider">Room ID</span>
+                    <span className="font-mono text-lg font-bold text-emerald-400">{roomId}</span>
+                    </div>
+                </div>
+
+                <button
+                    onClick={() => setPlayer("")}
+                    className="group mt-8 flex items-center gap-2 text-sm font-bold uppercase tracking-tighter text-zinc-500 transition-colors hover:text-red-400"
+                >
+                    <span className="h-[1px] w-4 bg-zinc-700 transition-all group-hover:w-8 group-hover:bg-red-400"></span>
+                    Leave Lobby
+                </button>
                 </div>
             );
         }
@@ -182,6 +224,7 @@ function MultiPlayerOnline() {
                 board={board}
                 handleClick={handleClick}
                 winningCells={winningCells}
+                isXturn={isXturn}
             />
             
               <Link 
@@ -199,3 +242,6 @@ function MultiPlayerOnline() {
 }
 
 export default MultiPlayerOnline;
+
+
+

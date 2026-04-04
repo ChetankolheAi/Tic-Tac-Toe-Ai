@@ -21,7 +21,8 @@ function MainGamePage({isVsComputer}) {
     const [isVsComputerState, setIsVsComputer] = useState(isVsComputer); 
     const clickSound = useRef(null);
     const winSound = useRef(null);
-
+    const DrawSound = useRef(null);
+    const LooseSound = useRef(null);
     useEffect(() => {
         setIsVsComputer(isVsComputer);
     }, [isVsComputer]);
@@ -29,6 +30,8 @@ function MainGamePage({isVsComputer}) {
     useEffect(() => {
         clickSound.current = new Audio('/sound.mp3');
         winSound.current = new Audio('/Victory.mp3');
+        DrawSound.current = new Audio('/Draw.mp3');
+        LooseSound.current = new Audio('/Loose.mp3');
     }, []);
 
 
@@ -54,13 +57,22 @@ function MainGamePage({isVsComputer}) {
 
                 if (result.winner === 'X') setPlayer1Score(p => p + 1);
                 if (result.winner === 'O') setPlayer2Score(p => p + 1);
-
-                if (winSound.current) {
+                if(isVsComputer && result.winner==='O'){
+                    if (LooseSound.current) {
+                        LooseSound.current.currentTime = 0;
+                        LooseSound.current.play().catch(() => {});
+                    }
+                } 
+                else if (winSound.current) {
                     winSound.current.currentTime = 0;
                     winSound.current.play().catch(() => {});
                 }
             } 
             else if (newBoard.every(cell => cell !== null)) {
+                if (DrawSound.current) {
+                    DrawSound.current.currentTime = 0;
+                    DrawSound.current.play().catch(() => {});
+                }
                 setisDraw(true);
                 setTieScore(p => p + 1);
             }
